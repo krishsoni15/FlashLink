@@ -1,0 +1,111 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --gradient-start: #facc15;
+  --gradient-mid: #f97316;
+  --gradient-end: #ea580c;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #000000;
+  color: #ffffff;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(250, 204, 21, 0.3);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(250, 204, 21, 0.8);
+}
+
+/* Selection */
+::selection {
+  background: rgba(250, 204, 21, 0.9);
+  color: #000;
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-[#09090b] border border-white/10 rounded-xl shadow-[0_0_15px_rgba(0,0,0,0.5)];
+  }
+
+  .glass-card-hover {
+    @apply glass-card transition-all duration-300 hover:bg-[#121214] hover:border-brand-500/30 hover:shadow-[0_0_20px_rgba(234,179,8,0.1)];
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-400 via-orange-400 to-brand-500;
+  }
+
+  .gradient-border {
+    position: relative;
+  }
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, var(--gradient-start), var(--gradient-mid), var(--gradient-end));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .btn-primary {
+    @apply relative px-6 py-3 bg-brand-500 text-black font-bold rounded-lg
+           transition-all duration-300 hover:bg-brand-400 hover:shadow-[0_0_20px_rgba(234,179,8,0.4)]
+           active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 bg-transparent border border-white/20 text-white font-semibold rounded-lg
+           transition-all duration-300 hover:bg-white/5 hover:border-white/40
+           active:scale-[0.98];
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 bg-[#09090b] border border-white/20 rounded-lg text-white
+           placeholder:text-white/40 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500
+           transition-all duration-200;
+  }
+
+  .stat-card {
+    @apply glass-card p-6 space-y-2 border-l-2 border-l-brand-500;
+  }
+}
+
+/* Grid background - Sharp, non-blurry */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: center center;
+}
