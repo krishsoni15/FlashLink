@@ -45,8 +45,9 @@ export default function HomePage() {
     setError('');
     setResult(null);
 
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
     try {
-      const response = await fetch('http://localhost:8080/api/v1/urls', {
+      const response = await fetch(`${apiUrl}/urls`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url, custom_alias: customAlias || undefined }),
@@ -647,29 +648,29 @@ export default function HomePage() {
                   {codeTab === 'curl' && (
                     <code className="block whitespace-pre">
                       <span className="text-purple-400">curl</span> -X POST http://localhost:8080/api/v1/urls \<br />
-                      &nbsp;&nbsp;-H <span className="text-emerald-400">"Content-Type: application/json"</span> \<br />
-                      &nbsp;&nbsp;-H <span className="text-emerald-400">"Authorization: Bearer fl_live_api_key_demo"</span> \<br />
-                      &nbsp;&nbsp;-d <span className="text-cyan-400">'{`{"url": "https://github.com", "custom_alias": "hub"}`}'</span>
+                      &nbsp;&nbsp;-H <span className="text-emerald-400">{"\"Content-Type: application/json\""}</span> \<br />
+                      &nbsp;&nbsp;-H <span className="text-emerald-400">{"\"Authorization: Bearer fl_live_api_key_demo\""}</span> \<br />
+                      &nbsp;&nbsp;-d <span className="text-cyan-400">{"'{\"url\": \"https://github.com\", \"custom_alias\": \"hub\"}'"}</span>
                     </code>
                   )}
                   {codeTab === 'js' && (
                     <code className="block whitespace-pre">
-                      <span className="text-purple-400">await</span> <span className="text-cyan-400">fetch</span>(<span className="text-emerald-400">'http://localhost:8080/api/v1/urls'</span>, &#123;<br />
-                      &nbsp;&nbsp;method: <span className="text-emerald-400">'POST'</span>,<br />
+                      <span className="text-purple-400">await</span> <span className="text-cyan-400">fetch</span>(<span className="text-emerald-400">{"'http://localhost:8080/api/v1/urls'"}</span>, &#123;<br />
+                      &nbsp;&nbsp;method: <span className="text-emerald-400">{"'POST'"}</span>,<br />
                       &nbsp;&nbsp;headers: &#123;<br />
-                      &nbsp;&nbsp;&nbsp;&nbsp;<span className="text-emerald-400">'Content-Type'</span>: <span className="text-emerald-400">'application/json'</span>,<br />
-                      &nbsp;&nbsp;&nbsp;&nbsp;<span className="text-emerald-400">'Authorization'</span>: <span className="text-emerald-400">'Bearer fl_live_api_key_demo'</span><br />
+                      &nbsp;&nbsp;&nbsp;&nbsp;<span className="text-emerald-400">{"'Content-Type'"}</span>: <span className="text-emerald-400">{"'application/json'"}</span>,<br />
+                      &nbsp;&nbsp;&nbsp;&nbsp;<span className="text-emerald-400">{"'Authorization'"}</span>: <span className="text-emerald-400">{"'Bearer fl_live_api_key_demo'"}</span><br />
                       &nbsp;&nbsp;&#125;,<br />
-                      &nbsp;&nbsp;body: JSON.<span className="text-cyan-400">stringify</span>(&#123; url: <span className="text-emerald-400">'https://github.com'</span> &#125;)<br />
+                      &nbsp;&nbsp;body: JSON.<span className="text-cyan-400">stringify</span>(&#123; url: <span className="text-emerald-400">{"'https://github.com'"}</span> &#125;)<br />
                       &#125;);
                     </code>
                   )}
                   {codeTab === 'go' && (
                     <code className="block whitespace-pre">
                       payload := strings.<span className="text-cyan-400">NewReader</span>(<span className="text-cyan-400">{`\`{"url": "https://github.com"}\``}</span>)<br />
-                      req, _ := http.<span className="text-cyan-400">NewRequest</span>(<span className="text-emerald-400">"POST"</span>, <span className="text-emerald-400">"http://localhost:8080/api/v1/urls"</span>, payload)<br />
-                      req.Header.<span className="text-cyan-400">Add</span>(<span className="text-emerald-400">"Content-Type"</span>, <span className="text-emerald-400">"application/json"</span>)<br />
-                      req.Header.<span className="text-cyan-400">Add</span>(<span className="text-emerald-400">"Authorization"</span>, <span className="text-emerald-400">"Bearer fl_live_api_key_demo"</span>)<br />
+                      req, _ := http.<span className="text-cyan-400">NewRequest</span>(<span className="text-emerald-400">{"\"POST\""}</span>, <span className="text-emerald-400">{"\"http://localhost:8080/api/v1/urls\""}</span>, payload)<br />
+                      req.Header.<span className="text-cyan-400">Add</span>(<span className="text-emerald-400">{"\"Content-Type\""}</span>, <span className="text-emerald-400">{"\"application/json\""}</span>)<br />
+                      req.Header.<span className="text-cyan-400">Add</span>(<span className="text-emerald-400">{"\"Authorization\""}</span>, <span className="text-emerald-400">{"\"Bearer fl_live_api_key_demo\""}</span>)<br />
                       res, _ := http.DefaultClient.<span className="text-cyan-400">Do</span>(req)
                     </code>
                   )}
@@ -698,7 +699,7 @@ export default function HomePage() {
                   {/* Sandbox code compilation output logs */}
                   <div className="p-3.5 rounded-xl bg-black/60 border border-white/[0.03] text-xs font-mono min-h-[85px] flex flex-col justify-start gap-1 overflow-x-auto">
                     {terminalOutput.length === 0 ? (
-                      <span className="text-neutral-500 italic">Click "Run Request" to compile API sandbox...</span>
+                      <span className="text-neutral-500 italic">Click &quot;Run Request&quot; to compile API sandbox...</span>
                     ) : (
                       terminalOutput.map((line, idx) => (
                         <pre key={idx} className={`whitespace-pre-wrap ${
