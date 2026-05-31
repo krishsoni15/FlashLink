@@ -97,7 +97,7 @@ func main() {
 
 	// Protected routes
 	protected := api.Group("")
-	protected.Use(middleware.AuthMiddleware(authService))
+	protected.Use(middleware.AuthMiddleware(authService, apiKeyService))
 	{
 		protected.GET("/auth/me", authHandler.GetProfile)
 		

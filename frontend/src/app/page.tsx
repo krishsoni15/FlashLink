@@ -648,7 +648,7 @@ export default function HomePage() {
                     <code className="block whitespace-pre">
                       <span className="text-purple-400">curl</span> -X POST http://localhost:8080/api/v1/urls \<br />
                       &nbsp;&nbsp;-H <span className="text-emerald-400">"Content-Type: application/json"</span> \<br />
-                      &nbsp;&nbsp;-H <span className="text-emerald-400">"Authorization: Bearer fl_api_key_demo"</span> \<br />
+                      &nbsp;&nbsp;-H <span className="text-emerald-400">"Authorization: Bearer fl_live_api_key_demo"</span> \<br />
                       &nbsp;&nbsp;-d <span className="text-cyan-400">'{`{"url": "https://github.com", "custom_alias": "hub"}`}'</span>
                     </code>
                   )}
@@ -658,7 +658,7 @@ export default function HomePage() {
                       &nbsp;&nbsp;method: <span className="text-emerald-400">'POST'</span>,<br />
                       &nbsp;&nbsp;headers: &#123;<br />
                       &nbsp;&nbsp;&nbsp;&nbsp;<span className="text-emerald-400">'Content-Type'</span>: <span className="text-emerald-400">'application/json'</span>,<br />
-                      &nbsp;&nbsp;&nbsp;&nbsp;<span className="text-emerald-400">'Authorization'</span>: <span className="text-emerald-400">'Bearer fl_api_key_demo'</span><br />
+                      &nbsp;&nbsp;&nbsp;&nbsp;<span className="text-emerald-400">'Authorization'</span>: <span className="text-emerald-400">'Bearer fl_live_api_key_demo'</span><br />
                       &nbsp;&nbsp;&#125;,<br />
                       &nbsp;&nbsp;body: JSON.<span className="text-cyan-400">stringify</span>(&#123; url: <span className="text-emerald-400">'https://github.com'</span> &#125;)<br />
                       &#125;);
@@ -669,7 +669,7 @@ export default function HomePage() {
                       payload := strings.<span className="text-cyan-400">NewReader</span>(<span className="text-cyan-400">{`\`{"url": "https://github.com"}\``}</span>)<br />
                       req, _ := http.<span className="text-cyan-400">NewRequest</span>(<span className="text-emerald-400">"POST"</span>, <span className="text-emerald-400">"http://localhost:8080/api/v1/urls"</span>, payload)<br />
                       req.Header.<span className="text-cyan-400">Add</span>(<span className="text-emerald-400">"Content-Type"</span>, <span className="text-emerald-400">"application/json"</span>)<br />
-                      req.Header.<span className="text-cyan-400">Add</span>(<span className="text-emerald-400">"Authorization"</span>, <span className="text-emerald-400">"Bearer fl_api_key_demo"</span>)<br />
+                      req.Header.<span className="text-cyan-400">Add</span>(<span className="text-emerald-400">"Authorization"</span>, <span className="text-emerald-400">"Bearer fl_live_api_key_demo"</span>)<br />
                       res, _ := http.DefaultClient.<span className="text-cyan-400">Do</span>(req)
                     </code>
                   )}

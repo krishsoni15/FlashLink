@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"time"
 
 	"github.com/flashlink/backend/internal/model"
@@ -70,4 +71,20 @@ func (s *APIKeyService) List(ctx context.Context, workspaceID string) ([]model.A
 
 func (s *APIKeyService) Delete(ctx context.Context, id, workspaceID string) error {
 	return s.repo.Delete(ctx, id, workspaceID)
+}
+
+func (s *APIKeyService) ValidateKey(ctx context.Context, plainKey string) (string, error) {
+	hash := sha256.Sum256([]byte(plainKey))
+	keyHash := hex.EncodeToString(hash[:])
+
+	apiKey, err := s.repo.GetByHash(ctx, keyHash)
+	if err != nil {
+		return "", err
+	}
+
+	if apiKey.ExpiresAt != nil && apiKey.ExpiresAt.Before(time.Now()) {
+		return "", errors.New("API key expired")
+	}
+
+	return apiKey.WorkspaceID.String(), nil
 }

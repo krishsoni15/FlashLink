@@ -18,23 +18,38 @@ func extractToken(c *gin.Context) string {
 	return ""
 }
 
-func AuthMiddleware(authService *service.AuthService) gin.HandlerFunc {
+func AuthMiddleware(authService *service.AuthService, apiKeyService *service.APIKeyService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := extractToken(c)
 		if token == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization token required"})
+			token = c.GetHeader("X-API-Key")
+		}
+		if token == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization token or API key required"})
 			c.Abort()
 			return
 		}
 
-		userID, err := authService.ValidateToken(token)
-		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
-			c.Abort()
-			return
+		if strings.HasPrefix(token, "fl_live_") {
+			workspaceID, err := apiKeyService.ValidateKey(c.Request.Context(), token)
+			if err != nil {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired API key"})
+				c.Abort()
+				return
+			}
+			c.Set("userID", workspaceID)
+			c.Set("authMethod", "api_key")
+		} else {
+			userID, err := authService.ValidateToken(token)
+			if err != nil {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
+				c.Abort()
+				return
+			}
+			c.Set("userID", userID)
+			c.Set("authMethod", "jwt")
 		}
 
-		c.Set("userID", userID)
 		c.Next()
 	}
 }

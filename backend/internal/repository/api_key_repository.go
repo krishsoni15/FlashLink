@@ -28,3 +28,12 @@ func (r *APIKeyRepository) GetByWorkspace(ctx context.Context, workspaceID strin
 func (r *APIKeyRepository) Delete(ctx context.Context, id string, workspaceID string) error {
 	return r.db.WithContext(ctx).Where("id = ? AND workspace_id = ?", id, workspaceID).Delete(&model.APIKey{}).Error
 }
+
+func (r *APIKeyRepository) GetByHash(ctx context.Context, hash string) (*model.APIKey, error) {
+	var key model.APIKey
+	err := r.db.WithContext(ctx).Where("key_hash = ?", hash).First(&key).Error
+	if err != nil {
+		return nil, err
+	}
+	return &key, nil
+}
