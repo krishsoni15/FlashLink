@@ -23,7 +23,7 @@ const (
 type User struct {
 	ID           uuid.UUID         `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
 	Email        string            `gorm:"type:varchar(255);uniqueIndex;not null" json:"email"`
-	PasswordHash string            `gorm:"column:password_hash;type:varchar(255);not null" json:"-"`
+	PasswordHash string            `gorm:"column:password;type:varchar(255);not null" json:"-"`
 	Name         string            `gorm:"type:varchar(100)" json:"name"`
 	Workspaces   []WorkspaceMember `gorm:"foreignKey:UserID" json:"workspaces,omitempty"`
 	CreatedAt    time.Time         `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
@@ -48,7 +48,7 @@ type WorkspaceMember struct {
 	ID          uuid.UUID  `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
 	WorkspaceID uuid.UUID  `gorm:"type:uuid;not null;uniqueIndex:idx_ws_user" json:"workspace_id"`
 	UserID      uuid.UUID  `gorm:"type:uuid;not null;uniqueIndex:idx_ws_user" json:"user_id"`
-	Role        MemberRole `gorm:"type:member_role;default:'viewer'" json:"role"`
+	Role        MemberRole `gorm:"type:varchar(20);default:'viewer'" json:"role"`
 	JoinedAt    time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"joined_at"`
 }
 
@@ -85,9 +85,10 @@ func (j *JSONB) Scan(value interface{}) error {
 // Link represents the core dynamic link structure
 type Link struct {
 	ID           uuid.UUID  `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
-	WorkspaceID  uuid.UUID  `gorm:"type:uuid;not null" json:"workspace_id"`
+	WorkspaceID  uuid.UUID  `gorm:"type:uuid;not null;index" json:"workspace_id"`
+	UserID       *uuid.UUID `gorm:"type:uuid;index" json:"user_id,omitempty"`
 	DomainID     *uuid.UUID `gorm:"type:uuid" json:"domain_id,omitempty"`
-	ShortCode    string     `gorm:"type:varchar(50);not null;uniqueIndex:idx_domain_code" json:"short_code"`
+	ShortCode    string     `gorm:"type:varchar(50);not null;uniqueIndex" json:"short_code"`
 	OriginalURL  string     `gorm:"type:text;not null" json:"original_url"`
 	Title        string     `gorm:"type:varchar(255)" json:"title,omitempty"`
 	Description  string     `gorm:"type:text" json:"description,omitempty"`
@@ -137,7 +138,7 @@ type APIKey struct {
 	ID          uuid.UUID  `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
 	WorkspaceID uuid.UUID  `gorm:"type:uuid;not null" json:"workspace_id"`
 	Name        string     `gorm:"type:varchar(100);not null" json:"name"`
-	KeyPrefix   string     `gorm:"type:varchar(10);not null" json:"key_prefix"`
+	KeyPrefix   string     `gorm:"type:varchar(50);not null" json:"key_prefix"`
 	KeyHash     string     `gorm:"type:varchar(255);not null;uniqueIndex" json:"-"`
 	CreatedAt   time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
 	ExpiresAt   *time.Time `json:"expires_at,omitempty"`
@@ -159,29 +160,5 @@ type Click struct {
 	IsUnique  bool      `gorm:"default:true" json:"is_unique"`
 }
 
-// CreateURLRequest handles API request input schema
-type CreateURLRequest struct {
-	URL         string `json:"url" binding:"required,url"`
-	CustomAlias string `json:"custom_alias,omitempty"`
-}
-
-// URLResponse handles API creation output schema
-type URLResponse struct {
-	ShortCode   string `json:"short_code"`
-	ShortURL    string `json:"short_url"`
-	OriginalURL string `json:"original_url"`
-	QRCode      string `json:"qr_code,omitempty"`
-	CreatedAt   string `json:"created_at"`
-}
-
-// ClickItem represents individual simplified click records for UI display
-type ClickItem struct {
-	Timestamp string `json:"timestamp"`
-}
-
-// AnalyticsResponse represents compiled high-level click statistics
-type AnalyticsResponse struct {
-	TotalClicks  int64       `json:"total_clicks"`
-	RecentClicks []ClickItem `json:"recent_clicks"`
-}
+// End of database models
 

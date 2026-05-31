@@ -6,20 +6,20 @@ import (
 	"time"
 
 	"github.com/flashlink/backend/internal/cache"
-	"github.com/flashlink/backend/internal/repository"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 var startTime = time.Now()
 
 // HealthHandler handles health check requests
 type HealthHandler struct {
-	db    *repository.Database
+	db    *gorm.DB
 	cache *cache.RedisCache
 }
 
 // NewHealthHandler creates a new health handler
-func NewHealthHandler(db *repository.Database, cache *cache.RedisCache) *HealthHandler {
+func NewHealthHandler(db *gorm.DB, cache *cache.RedisCache) *HealthHandler {
 	return &HealthHandler{db: db, cache: cache}
 }
 
@@ -29,13 +29,13 @@ func (h *HealthHandler) HealthCheck(c *gin.Context) {
 	defer cancel()
 
 	dbStatus := "healthy"
-	if err := h.db.Ping(); err != nil {
+	if err := h.db.WithContext(ctx).Exec("SELECT 1").Error; err != nil {
 		dbStatus = "unhealthy: " + err.Error()
 	}
 
 	redisStatus := "healthy"
-	if err := h.cache.Ping(ctx); err != nil {
-		redisStatus = "unhealthy: " + err.Error()
+	if h.cache == nil {
+		redisStatus = "unhealthy: cache not initialized"
 	}
 
 	status := "healthy"

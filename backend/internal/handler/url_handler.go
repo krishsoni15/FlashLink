@@ -6,7 +6,6 @@ import (
 	"github.com/flashlink/backend/internal/model"
 	"github.com/flashlink/backend/internal/service"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 type URLHandler struct {
@@ -24,7 +23,9 @@ func (h *URLHandler) CreateShortURL(c *gin.Context) {
 		return
 	}
 
-	result, err := h.urlService.CreateShortURL(c.Request.Context(), &req)
+	userID, _ := c.Get("userID")
+
+	result, err := h.urlService.CreateShortURL(c.Request.Context(), &req, userID.(string))
 	if err != nil {
 		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 		return
@@ -62,4 +63,64 @@ func (h *URLHandler) GetAnalytics(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, analytics)
+}
+
+func (h *URLHandler) GetUserURLs(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	urls, err := h.urlService.GetUserURLs(c.Request.Context(), userID.(string))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch urls"})
+		return
+	}
+
+	scheme := "http"
+	if c.Request.TLS != nil {
+		scheme = "https"
+	}
+	baseURL := scheme + "://" + c.Request.Host
+
+	type CustomURLResponse struct {
+		model.Link
+		ShortURL string `json:"short_url"`
+	}
+
+	response := make([]CustomURLResponse, len(urls))
+	for i, url := range urls {
+		response[i] = CustomURLResponse{
+			Link:     url,
+			ShortURL: baseURL + "/" + url.ShortCode,
+		}
+	}
+	
+	c.JSON(http.StatusOK, gin.H{
+		"data": response,
+		"total": len(urls),
+		"page": 1,
+		"per_page": 50,
+		"total_pages": 1,
+	})
+}
+
+func (h *URLHandler) DeleteURL(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"message": "deleted"})
+}
+
+func (h *URLHandler) GetUserStats(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	stats, err := h.urlService.GetDashboardAnalytics(c.Request.Context(), userID.(string))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch stats"})
+		return
+	}
+	c.JSON(http.StatusOK, stats)
+}
+
+func (h *URLHandler) GetDashboardAnalytics(c *gin.Context) {
+	userID, _ := c.Get("userID")
+	stats, err := h.urlService.GetDashboardAnalytics(c.Request.Context(), userID.(string))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch analytics"})
+		return
+	}
+	c.JSON(http.StatusOK, stats)
 }

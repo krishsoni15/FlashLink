@@ -12,6 +12,7 @@ import (
 	"github.com/flashlink/backend/internal/cache"
 	"github.com/flashlink/backend/internal/config"
 	"github.com/flashlink/backend/internal/handler"
+	"github.com/flashlink/backend/internal/middleware"
 	"github.com/flashlink/backend/internal/repository"
 	"github.com/flashlink/backend/internal/service"
 	"github.com/flashlink/backend/pkg/logger"
@@ -33,12 +34,19 @@ func main() {
 	if err != nil {
 		logger.Fatal("Failed to connect to database", "error", err)
 	}
-	defer db.Close() // GORM db.DB() close handled internally if needed, or get sql.DB
+
+	// Get underlying sql.DB to defer close
+	if sqlDB, err := db.DB(); err == nil {
+		defer sqlDB.Close()
+	}
 
 	repo := repository.NewRepository(db)
 	if err := repo.AutoMigrate(); err != nil {
 		logger.Fatal("Failed to run migrations", "error", err)
 	}
+
+	userRepo := repository.NewUserRepository(db)
+	apiKeyRepo := repository.NewAPIKeyRepository(db)
 
 	// 2. Initialize Redis
 	redisCache, err := cache.NewRedisCache(&cfg.Redis)
@@ -49,19 +57,24 @@ func main() {
 
 	// 3. Initialize Services
 	urlService := service.NewURLService(repo, redisCache, cfg)
+	authService := service.NewAuthService(userRepo, cfg)
+	apiKeyService := service.NewAPIKeyService(apiKeyRepo)
 
 	// 4. Initialize Handlers
 	urlHandler := handler.NewURLHandler(urlService)
+	authHandler := handler.NewAuthHandler(authService)
+	apiKeyHandler := handler.NewAPIKeyHandler(apiKeyService)
 
 	gin.SetMode(cfg.Server.Mode)
 	router := gin.New()
 	router.Use(gin.Recovery())
+	router.Use(middleware.LoggerMiddleware())
 
 	// Super minimal middleware for CORS
 	router.Use(func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
-		c.Header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-		c.Header("Access-Control-Allow-Headers", "Content-Type")
+		c.Header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, DELETE")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
 			return
@@ -74,8 +87,32 @@ func main() {
 
 	// API Routes
 	api := router.Group("/api/v1")
-	api.POST("/urls", urlHandler.CreateShortURL)
-	api.GET("/urls/:shortCode/analytics", urlHandler.GetAnalytics)
+	
+	// Auth routes (Public)
+	auth := api.Group("/auth")
+	{
+		auth.POST("/register", authHandler.Register)
+		auth.POST("/login", authHandler.Login)
+	}
+
+	// Protected routes
+	protected := api.Group("")
+	protected.Use(middleware.AuthMiddleware(authService))
+	{
+		protected.GET("/auth/me", authHandler.GetProfile)
+		
+		protected.POST("/urls", urlHandler.CreateShortURL)
+		protected.GET("/urls", urlHandler.GetUserURLs)
+		protected.DELETE("/urls/:id", urlHandler.DeleteURL)
+		protected.GET("/urls/:shortCode/analytics", urlHandler.GetAnalytics)
+		
+		protected.GET("/stats", urlHandler.GetUserStats)
+		protected.GET("/analytics/dashboard", urlHandler.GetDashboardAnalytics)
+		
+		protected.POST("/api-keys", apiKeyHandler.Create)
+		protected.GET("/api-keys", apiKeyHandler.List)
+		protected.DELETE("/api-keys/:id", apiKeyHandler.Delete)
+	}
 
 	// Background worker for syncing clicks from Redis to Postgres
 	ctx, cancel := context.WithCancel(context.Background())
@@ -102,7 +139,7 @@ func main() {
 	}
 
 	go func() {
-		logger.Info("FlashLink Performance server running", "addr", srv.Addr)
+		logger.Info("FlashLink V2 Server running", "addr", srv.Addr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Fatal("Server failed to start", "error", err)
 		}

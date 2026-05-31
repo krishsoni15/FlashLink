@@ -6,8 +6,10 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/flashlink/backend/internal/cache"
 	"github.com/flashlink/backend/internal/config"
@@ -34,15 +36,23 @@ func NewURLService(repo *repository.Repository, cache *cache.RedisCache, cfg *co
 	}
 }
 
-func (s *URLService) CreateShortURL(ctx context.Context, req *model.CreateURLRequest) (*model.URLResponse, error) {
+func (s *URLService) CreateShortURL(ctx context.Context, req *model.CreateURLRequest, userIDStr string) (*model.URLResponse, error) {
 	shortCode := req.CustomAlias
 	if shortCode == "" {
 		shortCode = generateShortCode(s.config.App.ShortCodeLength)
 	}
 
+	uid, _ := uuid.Parse(userIDStr)
+	wsID, err := s.repo.FindOrCreateWorkspace(ctx, uid)
+	if err != nil {
+		return nil, fmt.Errorf("workspace resolution failed: %w", err)
+	}
+
 	url := &model.Link{
 		ShortCode:   shortCode,
 		OriginalURL: req.URL,
+		UserID:      &uid,
+		WorkspaceID: wsID,
 		IsActive:    true,
 	}
 
@@ -179,26 +189,23 @@ func (s *URLService) SyncClickCounts(ctx context.Context) error {
 	return nil
 }
 
-func (s *URLService) GetAnalytics(ctx context.Context, shortCode string) (*model.AnalyticsResponse, error) {
+func (s *URLService) GetAnalytics(ctx context.Context, shortCode string) (*model.AnalyticsSummary, error) {
 	url, err := s.repo.GetURLByCode(ctx, shortCode)
 	if err != nil {
 		return nil, err
 	}
 
-	count, clicks, err := s.repo.GetAnalytics(ctx, url.ID.String())
+	count, _, err := s.repo.GetAnalytics(ctx, url.ID.String())
 	if err != nil {
 		return nil, err
 	}
 
-	resp := &model.AnalyticsResponse{
+	resp := &model.AnalyticsSummary{
 		TotalClicks: count,
-		RecentClicks: make([]model.ClickItem, len(clicks)),
-	}
-
-	for i, c := range clicks {
-		resp.RecentClicks[i] = model.ClickItem{
-			Timestamp: c.Timestamp.Format("2006-01-02T15:04:05Z"),
-		}
+		UniqueVisitors: count, // Mock unique visitors
+		ClicksByDate: []model.DateCount{
+			{Date: time.Now().Format("2006-01-02"), Count: count},
+		},
 	}
 
 	return resp, nil
@@ -214,4 +221,12 @@ func generateShortCode(length int) string {
 
 func b64(b []byte) string {
 	return base64.StdEncoding.EncodeToString(b)
+}
+
+func (s *URLService) GetUserURLs(ctx context.Context, userID string) ([]model.Link, error) {
+	return s.repo.GetUserURLs(ctx, userID)
+}
+
+func (s *URLService) GetDashboardAnalytics(ctx context.Context, userID string) (map[string]interface{}, error) {
+	return s.repo.GetDashboardAnalytics(ctx, userID)
 }

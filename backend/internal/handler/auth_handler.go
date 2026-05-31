@@ -76,20 +76,4 @@ func (h *AuthHandler) GetProfile(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-// RegenerateAPIKey handles POST /api/v1/auth/api-key
-func (h *AuthHandler) RegenerateAPIKey(c *gin.Context) {
-	userID, ok := middleware.GetUserID(c)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
-		return
-	}
 
-	apiKey, err := h.authService.RegenerateAPIKey(c.Request.Context(), userID)
-	if err != nil {
-		logger.Error("Failed to regenerate API key", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to regenerate API key"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"api_key": apiKey})
-}
