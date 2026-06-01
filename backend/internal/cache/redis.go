@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"time"
 
@@ -14,13 +15,22 @@ type RedisCache struct {
 }
 
 func NewRedisCache(cfg *config.RedisConfig) (*RedisCache, error) {
-	client := redis.NewClient(&redis.Options{
+	opts := &redis.Options{
 		Addr:         fmt.Sprintf("%s:%s", cfg.Host, cfg.Port),
 		Password:     cfg.Password,
 		DB:           cfg.DB,
 		PoolSize:     100, // Large pool for high concurrency
 		MinIdleConns: 20,
-	})
+	}
+
+	// Enable TLS for cloud Redis providers (Upstash, etc.)
+	if cfg.UseTLS {
+		opts.TLSConfig = &tls.Config{
+			MinVersion: tls.VersionTLS12,
+		}
+	}
+
+	client := redis.NewClient(opts)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

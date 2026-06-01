@@ -45,11 +45,14 @@ type RedisConfig struct {
 	Port     string
 	Password string
 	DB       int
+	UseTLS   bool
 }
 
 type AppConfig struct {
 	BaseURL         string
 	ShortCodeLength int
+	JWTSecret       string
+	AllowedOrigins  string
 }
 
 func Load() (*Config, error) {
@@ -72,13 +75,17 @@ func Load() (*Config, error) {
 			ConnMaxLifetime: time.Hour,
 		},
 		Redis: RedisConfig{
-			Host: getEnv("REDIS_HOST", "localhost"),
-			Port: getEnv("REDIS_PORT", "6379"),
-			DB:   0,
+			Host:     getEnv("REDIS_HOST", "localhost"),
+			Port:     getEnv("REDIS_PORT", "6379"),
+			Password: getEnv("REDIS_PASSWORD", ""),
+			DB:       0,
+			UseTLS:   getEnv("REDIS_TLS", "false") == "true",
 		},
 		App: AppConfig{
 			BaseURL:         getEnv("APP_BASE_URL", "http://localhost:8080"),
 			ShortCodeLength: 7,
+			JWTSecret:       getEnv("JWT_SECRET", "flashlink_super_secret_key_2024"),
+			AllowedOrigins:  getEnv("ALLOWED_ORIGINS", "http://localhost:3000"),
 		},
 	}, nil
 }

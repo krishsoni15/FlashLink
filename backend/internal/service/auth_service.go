@@ -105,13 +105,12 @@ func (s *AuthService) GenerateToken(userID string) (string, error) {
 		"sub": userID,
 		"exp": time.Now().Add(time.Hour * 24 * 7).Unix(),
 	})
-	// hardcoding secret for simplicity since config doesn't have it in V2 minimal right now
-	return token.SignedString([]byte("flashlink_super_secret_key_2024"))
+	return token.SignedString([]byte(s.config.App.JWTSecret))
 }
 
 func (s *AuthService) ValidateToken(tokenString string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return []byte("flashlink_super_secret_key_2024"), nil
+		return []byte(s.config.App.JWTSecret), nil
 	})
 
 	if err != nil || !token.Valid {

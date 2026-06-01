@@ -12,6 +12,11 @@ dist/
 .env
 .env.local
 .env.production
+backend/.env
+!.env.example
+
+# Compiled Go binary
+backend/server
 
 # IDE
 .vscode/
