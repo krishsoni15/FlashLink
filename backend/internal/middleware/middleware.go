@@ -54,6 +54,41 @@ func AuthMiddleware(authService *service.AuthService, apiKeyService *service.API
 	}
 }
 
+func OptionalAuthMiddleware(authService *service.AuthService, apiKeyService *service.APIKeyService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		token := extractToken(c)
+		if token == "" {
+			token = c.GetHeader("X-API-Key")
+		}
+		
+		if token == "" {
+			c.Set("userID", "")
+			c.Next()
+			return
+		}
+
+		if strings.HasPrefix(token, "fl_live_") {
+			workspaceID, err := apiKeyService.ValidateKey(c.Request.Context(), token)
+			if err == nil {
+				c.Set("userID", workspaceID)
+				c.Set("authMethod", "api_key")
+			} else {
+				c.Set("userID", "")
+			}
+		} else {
+			userID, err := authService.ValidateToken(token)
+			if err == nil {
+				c.Set("userID", userID)
+				c.Set("authMethod", "jwt")
+			} else {
+				c.Set("userID", "")
+			}
+		}
+
+		c.Next()
+	}
+}
+
 func GetUserID(c *gin.Context) (string, bool) {
 	id, exists := c.Get("userID")
 	if !exists {

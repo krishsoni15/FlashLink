@@ -115,13 +115,19 @@ func main() {
 		auth.POST("/login", authHandler.Login)
 	}
 
+	// Optional auth routes (allow anonymous shortening)
+	optional := api.Group("")
+	optional.Use(middleware.OptionalAuthMiddleware(authService, apiKeyService))
+	{
+		optional.POST("/urls", urlHandler.CreateShortURL)
+	}
+
 	// Protected routes
 	protected := api.Group("")
 	protected.Use(middleware.AuthMiddleware(authService, apiKeyService))
 	{
 		protected.GET("/auth/me", authHandler.GetProfile)
 		
-		protected.POST("/urls", urlHandler.CreateShortURL)
 		protected.GET("/urls", urlHandler.GetUserURLs)
 		protected.DELETE("/urls/:id", urlHandler.DeleteURL)
 		protected.GET("/urls/:shortCode/analytics", urlHandler.GetAnalytics)
