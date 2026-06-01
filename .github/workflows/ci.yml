@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 env:
-  GO_VERSION: '1.22.x'
+  GO_VERSION: 'stable'
   NODE_VERSION: '20'
 
 jobs:
